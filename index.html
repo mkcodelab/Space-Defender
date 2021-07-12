@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Space Defender</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+</head>
+<body>
+    <canvas id="canvas1"></canvas>
+    <div class="menu off">
+    
+        <button class="btn1" id="upgradesBtn">Upgrades</button>
+        <button class="btn1" id="repairBtn">Repair</button>
+        <button class="btn1" id="statsBtn">Stats</button>
+        <button class="btn1" id="options">Options</button>
+        <!-- <button class="btn1" id="galacticMap">Galactic Map</button> -->
+        
+    </div>
+    <div class="upgrades-menu off" id="upgradesMenu">
+        <div class="upgrade-bar" id="firepowerUp">
+            <p>Firepower Upgrade</p>
+            <p id="firepowerCost">500</p>
+            <div class="upBtn">+</div>
+        </div>
+        <div class="upgrade-bar" id="reloadUp">
+            <p>Reload Speed</p>
+            <p id="reloadCost">1000</p>
+            <div class="upBtn">+</div>
+        </div>
+        <div class="upgrade-bar" id="hullUp">
+            <p>Base Hull Reinforcement</p>
+            <p id="hullCost">2000</p>
+            <div class="upBtn">+</div>
+        </div>
+        <!-- <div class="upgrade-bar" id="eneConUp">
+            <p>Lower Energy Consumption</p>
+            <p id="energyConsumptionCost"></p>
+            <div class="upBtn">+</div>
+        </div> -->
+        <div class="upgrade-bar" id="eneCapUp">
+            <p>Energy Capacity</p>
+            <p id="energyCapacity">2000</p>
+            <div class="upBtn">+</div>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
