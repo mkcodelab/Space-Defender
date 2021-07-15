@@ -4,6 +4,7 @@ const ctx = canvas.getContext('2d');
 function setSize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    
 }
 addEventListener('resize', setSize);
 setSize();
@@ -13,13 +14,15 @@ let frame = 0;
 let SFXVol = 0.5;
 let musicVol = 0.5;
 let gameOn = false;
+let gamePaused = false;
 // in future make player object and put all that shit inside
 let enemySpeedModifier = 20;
 let enemyHpModifier = 10;
+let enemyDmgModifier = 0.5;
 let credits = 0;
 let level = 1;
 // showing hitboxes
-const debug = false;
+let debug = false;
 
 // ==== LOADING ASSETS ===================
 // imgs=================
@@ -40,6 +43,8 @@ const projectileImg = new Image();
 projectileImg.src = 'assets/img/projectile.png';
 const enemyImg = new Image();
 enemyImg.src = 'assets/img/hydra.png';
+const enemy2Img = new Image();
+enemy2Img = 'assets/img/ogre.png';
 const bgImg = new Image();
 bgImg.src = 'assets/img/bg3.png';
 const hudImg = new Image();
@@ -89,20 +94,27 @@ ctx.fillText('Space Defender', canvas.width/2 - 500, canvas.height/2);
 ctx.font = '50px Papyrus';
 ctx.fillText('click anywhere to start!', canvas.width/2 - 100, canvas.height/2 + 100)
 ctx.font = '20px arial';
-ctx.fillText('Created by MKCodelab. Music by Amazing Kevin McLeod', 20, canvas.height - 100);
+ctx.fillText('LMB to shoot, RMB for shield, Esc to pause, M to open Menu', 20, canvas.height/2 + 200)
+ctx.fillText('Created by MKCodelab. Music by Amazing Kevin MacLeod', 20, canvas.height - 100);
+// start a game
 addEventListener('click', ()=>{
     if (!gameOn){
         loop();
-        bgm1.play();
+        bgm2.play();
         gameOn = true;
+        respawn();
+        spawnTimer = setInterval(respawn, 50000);
     }
+    // init spawn engine here
     
+
 });
 
 
 // BASE OF THE CANNON
 const base = {
-    size: 128,
+    // size: 128,
+    size: Math.floor(canvas.height/10),
     x: canvas.width/2,
     y: canvas.height/2,
     maxHp: 1000,
@@ -111,8 +123,9 @@ const base = {
     energy: 1000,
     // energy recharge 
     recharge: 0.5,
-    // tarcza musi spowalniac wrogow, i zadawac obrazenia
-    shieldEnergyUsage: 0.5,
+   
+// shield
+    shieldEnergyUsage: 1,
     skillActive: false,
     shieldRadius: 100,
     draw: function() {
@@ -127,6 +140,9 @@ const base = {
     },
     // zrob dwie funkcje on i off, zeby to mialo rece i nogi
     drawShield(){
+        // decrementing energy by hit, stopping enemies from 
+        // getting too close
+        // or slowing enemies down? 
         if(this.skillActive ){
             ctx.strokeStyle = 'rgba(20,200,255, 0.2)';
             ctx.fillStyle = 'rgba(20,200,255,0.1)';
@@ -147,14 +163,23 @@ const base = {
         if(this.skillActive){
             this.energy -= this.shieldEnergyUsage;
         }
+    },
+    // calculate x y and size (after resize ev)
+    calcXYS() {
+        this.x = canvas.width/2;
+        this.y = canvas.height/2;
+        this.size = Math.floor(canvas.height/10);
     }
 }
+
 // CANNON TURRET =============================
 const cannon = {
-    size: 50,
+    // size: 50,
+    size: Math.floor(canvas.height/10),
     name: 'Valkyrie XT-8',
-    x: base.x + 25,
-    y: base.y + 25,
+    // 25 magic number XD
+    x: base.x,
+    y: base.y,
    
     angle: 0,
     power: 100,
@@ -180,9 +205,9 @@ const cannon = {
             ctx.closePath();
         }
         ctx.save();
-        ctx.translate(this.x - this.size/2, this.y - this.size/2);
+        ctx.translate(this.x , this.y );
         ctx.rotate(mouse.angle * Math.PI / 180);
-        ctx.drawImage(cannonImg, 0- 64, 0 - 64, 128, 128);
+        ctx.drawImage(cannonImg, 0- this.size/2, 0 - this.size/2, this.size, this.size);
         ctx.restore();
     },
     calcEnergyConsumption(){
@@ -190,8 +215,19 @@ const cannon = {
     },
     calcTrailSize(){
         this.trailSize = this.power/10;
+    },
+    calcXYS(){
+        this.x = base.x;
+        this.y = base.y;
+        this.size = Math.floor(canvas.height/10);
     }
+    
 }
+// calculating x, y, size after resize
+addEventListener('resize', ()=>{
+    base.calcXYS();
+    cannon.calcXYS();
+});
 // MOUSE AND CROSSHAIR
 const mouse = {
     x: 0,
@@ -270,27 +306,39 @@ class LaserTrail {
        laserParticleArray.push(new LaserParticle(this.x, this.y))
     }
 }
+// addGold(10000);
 // laser trail particles
 class LaserParticle {
     constructor(x, y){
         this.x = x;
         this.y = y;
-        this.size = cannon.trailSize;
+        this.size = cannon.trailSize/2 + Math.random()* cannon.trailSize/5;
         this.lifespan = 0;
-        this.color = 'rgba(50,200,255,0.1)'
+        this.color = 'hsla(180, 100%, 80%, 0.7)';
+        this.shadowColor = 'hsl(190, 100%, 60%)';
+        this.wobble = Math.floor(Math.random() * 5 + 1);
+        this.fading = Math.random();
         
     }
     update(){
-        
+        // wobbling left / right
+        let PoM = Math.random() < .5 ? -1 : 1;
+        // fading
         this.size -= 0.5;
+        // movement with wobble
+        this.x += Math.random() * this.wobble * PoM;
+        this.y += Math.random() * this.wobble * PoM;
         this.lifespan ++;
         
     }
     draw(){
             ctx.fillStyle = this.color;
             ctx.beginPath();
-            ctx.arc(this.x, this.y , this.size, 0, Math.PI * 2);
+            ctx.shadowColor = this.shadowColor;
+            ctx.shadowBlur = 10;
+            ctx.arc(this.x, this.y , this.size/2, 0, Math.PI * 2);
             ctx.fill();
+            ctx.shadowBlur = 0;
             ctx.closePath();
     }
 }
@@ -398,11 +446,14 @@ function handleLaserParticles() {
 }
 
 // IMMA FIRIN MA LAZAAAAAH!!!!!!! ============================
+// i know i know... lasers don't makes sounds, especially in vacuum ofspace.
+// say it to George L... :D
+
 function laserSound() {
 // bass laser xd
 laserSnd.pause();
-laserSnd.playbackRate = 0.2;
-laserSnd.currentTime = 0.1;
+laserSnd.playbackRate = 0.5;
+laserSnd.currentTime = 0;
 laserSnd.play();
 // violin laser xd
 laser2Snd.pause();
@@ -420,8 +471,8 @@ function shoot() {
             let p1x = mouse.x
             let p1y = mouse.y
             // centerpoint of the cannon turret
-            let p2x = cannon.x - cannon.size/2;
-            let p2y = cannon.y - cannon.size/2;
+            let p2x = cannon.x;
+            let p2y = cannon.y;
         
             let vx = p2x - p1x;
             let vy = p2y - p1y;
@@ -432,8 +483,8 @@ function shoot() {
             dx *= -cannon.speed;
             dy *= -cannon.speed;
         // x & y coords of the laser projectile starting point
-            let x = cannon.x - cannon.size/2;
-            let y = cannon.y - cannon.size/2;
+            let x = cannon.x ;
+            let y = cannon.y ;
             laserArray.push(new Laser(x, y, dx, dy));
             laserTrailArray.push(new LaserTrail(x, y, dx, dy));
             base.energy -= cannon.energyConsumption;
@@ -484,9 +535,32 @@ addEventListener('mousemove', function(e){
 
 });
 
+// pausing the game with escape key
+const pauseScreen = document.querySelector('#pauseScreen');
+addEventListener('keydown', (e)=> {
+   if (e.key === 'Escape')  {
+    gamePaused = !gamePaused;
+    if(gamePaused){
+        clearInterval(spawnTimer);
+        console.log('spawnTimer Cleared')
+    }
+    if (!gamePaused){
+        spawnTimer = setInterval(respawn, timeToNext)
+        console.log('spawnTimer Started')
+    }
+    console.log(gamePaused)
+    loop();
+    pauseScreen.classList.toggle('pause-off')
+   }
+   
+})
+
 // ==========================================================
 
 // ENEMIES --------------------------------------
+// todo:
+// add some sprites
+// add randomized sprites based on enemy size / hp / lvl ?
 class Enemy {
     constructor(x, y,) {
         this.size = Math.floor(Math.random()*30 + 10);
@@ -499,6 +573,7 @@ class Enemy {
         this.hp = this.size * enemyHpModifier;
         this.credits = Math.floor(Math.random() * 100 + 20);
         this.angle = 0;
+        this.dmg = (Math.random() * 5 + 2) * enemyDmgModifier;
     }
     update() {
 // enemy movement towards the cannon / base
@@ -530,7 +605,15 @@ class Enemy {
         if (sumOfRadii > dist) {
             this.dx = 0;
             this.dy = 0;
-            base.hp -= 0.1;
+            // zerowanie hp
+            if (base.hp <= 0){
+                base.hp = 0;
+                // modulo frame zeby nie odejmowalo hp z klatkami
+            }else if (base.hp >= 0 && frame % 20 == 0) {
+                // tu wstaw modyfikator obrazen przeciwnika
+                base.hp -= this.dmg;
+            }
+
         } else {
             this.x += this.dx;
             this.y += this.dy;
@@ -638,6 +721,7 @@ class Boss {
         this.dx = 0;
         this.dy = 0;
         this.speed = 5;
+        this.angle = 0;
         this.hp = Math.random() * 100 + 500;
         this.shield = 100;
         this.credits = 2000;
@@ -647,15 +731,23 @@ class Boss {
         // flying pattern and logic
             this.x += this.dx;
             this.y += this.dy;
+            // atan and things
         // shooting
         
     }
     draw(){
-        ctx.fillStyle = 'orange'
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-        ctx.fill();
-        ctx.closePath();
+        if(debug){
+            ctx.fillStyle = 'orange'
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.closePath();
+        }
+        // rotating and other things
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle * Math.PI /180);
+        ctx.drawImage(enemy2Img, this.x, this.y, this.size, this.size);
     }
 }
 const bossArray = [];
@@ -673,14 +765,19 @@ function handleBoss(){
     }
 }
 
+
+// respawn engine =============================================
+
+
+
 // enemy array and function to populate it
 const enemyArray = [];
-// respawn engine =============================================
 function addEnemies(q) {
     for (let i = 0; i < q; i++) {
         
         let signX = Math.random() > .5 ? -1 : 1;
         let signY = Math.random() > .5 ? -1 : 1;
+        // respawn site
         let w = canvas.width;
         let h = canvas.height;
         let x = (Math.random() *w*2 + w/2) * signX;
@@ -688,22 +785,29 @@ function addEnemies(q) {
         enemyArray.push(new Enemy(x, y));
     }
 }
-
+// globals for respawn engine
 let enemyCount = 20;
 let wave = 0;
+let maxWave = 5;
+// time to next wave
+let timeToNext = 50000;
+let spawnTimer;
+
 function respawn() {
     let q = Math.random() * enemyCount + enemyCount/2;
     addEnemies(q)
     enemyCount+=5;
     wave++;
     console.log('wave '+wave)
-    if(wave == 10) {
-        clearInterval(spawnTimer);
+    // nie ma dostepu do textArray
+    // drawText(canvas.width/2, canvas.height/2, 'skyblue', 50, `Get ready for next wave`)
+    if(wave == maxWave) {
         console.log('end')
+        clearInterval(spawnTimer);
     }
+    console.log('enemies spawned')
+
 }
-respawn();
-let spawnTimer = window.setInterval(respawn, 50000)
 
 // killing enemies etc
 // render and delete
@@ -723,7 +827,7 @@ function handleEnemies() {
             // explo effect
             e[i].drawExplosion();
             // cyferki
-            drawText(e[i].x, e[i].y, 'violet', 25, `+ ${e[i].credits}`);
+            drawText(e[i].x, e[i].y, 'violet', 15, `+ ${e[i].credits}`);
             // removing dead enemy from array
             e.splice(i, 1);
         }
@@ -731,22 +835,37 @@ function handleEnemies() {
 }
 // stats displayed
 function drawStats() {
-    // banner width
     // replace it with graphics
+    // or maybe not?
     let font = 'Audiowide';
+    let size = 15;
+    // banner width
     let w = 600;
     let center = canvas.width/2
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(center - w/2, 0, w, 80);
-    // ctx.drawImage(hudImg, center - w/2, 0, w, 80)
-
-    ctx.fillStyle = 'violet';
-    ctx.font = `25px ${font}`;
+    
+    ctx.fillStyle = 'white';
+    ctx.font = `${size}px ${font}`;
+    ctx.shadowBlur = 7;
+    ctx.lineWidth = 2;
+    // credits
+    ctx.strokeStyle = 'violet';
+    ctx.shadowColor = 'violet';
+    ctx.strokeText(`Credits: ${credits}`, center - 250, 50);
     ctx.fillText(`Credits: ${credits}`, center - 250, 50);
-    ctx.fillStyle = 'crimson';
+    // base hp
+    ctx.strokeStyle = 'crimson';
+    ctx.shadowColor = 'crimson';
+    ctx.strokeText(`Base Hull: ${Math.floor(base.hp)}`, center - 100, 50);
     ctx.fillText(`Base Hull: ${Math.floor(base.hp)}`, center - 100, 50);
-    ctx.fillStyle = 'skyblue';
+    // energy
+    ctx.strokeStyle = 'skyblue';
+    ctx.shadowColor = 'skyblue';
+    ctx.strokeText(`Energy: ${Math.floor(base.energy)}`, center + 100, 50);
     ctx.fillText(`Energy: ${Math.floor(base.energy)}`, center + 100, 50);
+    ctx.shadowBlur = 0;
+
 }
 
 // background 
@@ -769,7 +888,13 @@ class Text {
             ctx.globalAlpha = this.opacity;
             ctx.beginPath();
             ctx.font = `${this.size}px Audiowide`;
-            ctx.fillStyle = this.col;
+            ctx.shadowColor = this.col;
+            ctx.shadowBlur = 7;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = this.col;
+            ctx.strokeText(this.msg, this.x, this.y);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'white';
             ctx.fillText(this.msg, this.x, this.y);
             ctx.fill();
             ctx.closePath();
@@ -781,10 +906,12 @@ class Text {
         if(this.opacity > 0.01) this.opacity -= 0.01;
         this.y -= 1;
         this.lifespan ++;
-        // this.size -= 0.1;
+        this.size += 0.1;
     }
 }
 // animated text 
+//  w sumie troche zbedna ta funkcja ale opakowuje
+// pusha
 function drawText(x, y, col, size, msg) {
     textArray.push(new Text(x, y, col, size, msg))
 }
@@ -811,7 +938,7 @@ function gameOver() {
         ctx.fillText('VICTORY', canvas.width/2 - 20, canvas.height/2);
     }
     if (base.hp <= 0) {
-        ctx.font = '50px Arial';
+        ctx.font = '50px Audiowide';
         ctx.fillStyle = 'red';
         ctx.fillText('Your base is destroyed... DEFEAT!',
          canvas.width/2 - 20, canvas.height/2);
@@ -829,28 +956,28 @@ function gameOver() {
 function loop() {
     ctx.imageSmoothingEnabled = false;
     frame++;
-    
-    bg();
-    base.draw();
-    base.update();
-    handleText();
-    cannon.calcEnergyConsumption();
-    cannon.calcTrailSize();
-    handleEnemies();
-    // handleCollisionBetweenEnemies();
-    handleLaser();
-    handleLaserTrail();
-    handleLaserParticles();
-    handleExplosions();
-    shoot();
-    cannon.draw();
-    base.drawShield();
-    mouse.draw();
-    drawStats();
-    gameOver();
-    // console.log(laserParticleArray, laserTrailArray)
-    // game = requestAnimationFrame(loop)
-    requestAnimationFrame(loop)
+        if(gamePaused) return;
+        bg();
+        base.draw();
+        base.update();
+        handleText();
+        // cannon.calcEnergyConsumption();
+        // cannon.calcTrailSize();
+        handleEnemies();
+        // handleCollisionBetweenEnemies();
+        handleLaserTrail();
+        handleLaserParticles();
+        handleLaser();
+        handleExplosions();
+        shoot();
+        cannon.draw();
+        base.drawShield();
+        mouse.draw();
+        drawStats();
+        gameOver();
+        // console.log(laserParticleArray, laserTrailArray)
+        // game = requestAnimationFrame(loop)
+        requestAnimationFrame(loop)
     
 }
 // loop();
@@ -876,6 +1003,10 @@ addEventListener('keydown', function(e){
         menuOpenSnd.currentTime = 0;
         menuOpenSnd.play();
     };
+    if (e.key === 'Escape'){
+        // game paused
+    }
+    // console.log(e.key)
 });
 function playRepairSnd(){
     repairSnd.pause();
@@ -886,11 +1017,11 @@ function playRepairSnd(){
 function repair() {
     // let cost = Math.floor(base.maxHp - base.hp) * 2;
     let cost = 100;
-    if (credits > cost){
+    if (credits > cost && base.hp != base.maxHp){
         credits -= cost;
-        
         // base.hp = base.maxHp;
         base.hp += cost;
+        
         if(base.hp > base.maxHp) base.hp = base.maxHp;
         playRepairSnd();
     }
@@ -915,6 +1046,8 @@ function upgradeFirepower() {
     if (credits >= cost) {
         cannon.power += 20;
         cannon.projectileSize ++;
+        cannon.calcTrailSize();
+        cannon.calcEnergyConsumption();
         firepowerCost.innerText = cost;
         credits -= cost;
         console.log(`Firepower Upgraded! Cost: ${cost}, power: ${cannon.power}`)
@@ -922,14 +1055,21 @@ function upgradeFirepower() {
         
     }
 }
+let reloadUpgradeCost = 1000;
 document.querySelector('#reloadUp').addEventListener('click', upgradeReload)
 function upgradeReload(){
-    let cost = 1000;
+    // let cost = 1000;
     const reloadCost = document.querySelector('#reloadCost');
-    if (credits >= cost) {
+    if (credits >= reloadUpgradeCost && cannon.reload > 5) {
+        // zmien koszt co iteracje
+        // zapisz koszt w globalnej zmiennej i dodawaj po prostu, albo mnóż
         cannon.reload --;
-        reloadCost.innerText = cost;
-        credits -= cost;
+        credits -= reloadUpgradeCost;
+        reloadUpgradeCost = Math.floor(reloadUpgradeCost * 1.2);
+        reloadCost.innerText = reloadUpgradeCost;
+        if (cannon.reload === 5) {
+            reloadCost.innerText = 'Max reload speed'
+        }
         playRepairSnd();
     }
 }
@@ -953,7 +1093,9 @@ function upgradeEneCap(){
         playRepairSnd();
     }
 }
-
+function addGold(quantity) {
+    credits += quantity;
+}
 
 // injecting calculated costs
 function calcUpgradeCosts() {
