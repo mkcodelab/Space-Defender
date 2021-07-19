@@ -11,8 +11,9 @@ setSize();
 // GLOBALS==================
 
 let frame = 0;
-let SFXVol = 0.5;
-let musicVol = 0.5;
+let SFXVol = 0.1;
+let musicVol = 0.1;
+let uiVol = 0.1;
 let gameOn = false;
 let gamePaused = false;
 // in future make player object and put all that shit inside
@@ -44,7 +45,7 @@ projectileImg.src = 'assets/img/projectile.png';
 const enemyImg = new Image();
 enemyImg.src = 'assets/img/hydra.png';
 const enemy2Img = new Image();
-enemy2Img = 'assets/img/ogre.png';
+enemy2Img.src = 'assets/img/ogre.png';
 const bgImg = new Image();
 bgImg.src = 'assets/img/bg3.png';
 const hudImg = new Image();
@@ -53,7 +54,7 @@ hudImg.src = 'assets/img/hud1.png';
 //sounds
 const laserSnd = new Audio();
 laserSnd.src = 'assets/sound/laser3.mp3';
-laserSnd.volume = SFXVol + 0.1;
+laserSnd.volume = SFXVol;
 // laserSnd.playbackRate = 1;
 const laser2Snd = new Audio();
 laser2Snd.src = 'assets/sound/laser6.mp3';
@@ -62,6 +63,7 @@ laser2Snd.volume = SFXVol;
 const killSound = new Audio();
 killSound.src = 'assets/sound/boom.wav';
 killSound.playbackRate = 0.5;
+killSound.volume = SFXVol;
 // console.log(laserSnd.volume);
 
 const shieldUpSnd = new Audio();
@@ -71,10 +73,12 @@ shieldDownSnd.src = 'assets/sound/shieldDown.wav';
 
 const menuOpenSnd = new Audio();
 menuOpenSnd.src = 'assets/sound/ui/Click_Electronic_14.mp3';
+menuOpenSnd.volume = uiVol;
 const menuCloseSnd = new Audio();
 menuCloseSnd.src = 'assets/sound/spaceTrash2.mp3';
 const repairSnd = new Audio();
 repairSnd.src = 'assets/sound/ui/Click_Electronic_10.mp3';
+repairSnd.vol = uiVol;
 
 
 const bgm1 = new Audio();
@@ -82,7 +86,7 @@ bgm1.src = 'assets/sound/Phantom from Space.mp3';
 bgm1.volume = musicVol;
 const bgm2 = new Audio();
 bgm2.src = 'assets/sound/Space Fighter Loop.mp3';
-bgm2.volume = 0.2;
+bgm2.volume = musicVol;
 
 
 
@@ -234,12 +238,21 @@ const mouse = {
     y: 0, 
     size: 32,
     angle : 0,
+    rotation: 0,
     // crosshair / reticle
     draw: function(){
        
         let centerX = this.x - this.size/2;
         let centerY = this.y - this.size/2;
-        ctx.drawImage(crosshairImg, centerX, centerY, this.size, this.size);
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation * Math.PI/2);
+        ctx.drawImage(crosshairImg, 0 - this.size/2, 0 - this.size/2, this.size, this.size);
+        ctx.restore();
+    },
+    update: function() {
+        // optional ??
+        this.rotation += 0.01;
     }
 }
 
@@ -972,6 +985,7 @@ function loop() {
         shoot();
         cannon.draw();
         base.drawShield();
+        mouse.update();
         mouse.draw();
         drawStats();
         gameOver();
@@ -990,18 +1004,23 @@ function loop() {
 
 
 const menu = document.querySelector('.menu');
-
+function playMenuOpenSnd() {
+    menuOpenSnd.pause();
+    menuOpenSnd.currentTime = 0;
+    menuOpenSnd.play();
+}
 addEventListener('keydown', function(e){
     if(e.key === 'm' || e.key === 'i'){
         menu.classList.toggle('off');
         // checks if upgrade menu contains off class to toggle it off
         //  when pressed menu button
         if(!upgradesMenu.classList.contains('off')){
-            upgradesMenu.classList.toggle('off')
+            upgradesMenu.classList.toggle('off');
         }
-        menuOpenSnd.pause();
-        menuOpenSnd.currentTime = 0;
-        menuOpenSnd.play();
+        if(!statsMenu.classList.contains('off')){
+            statsMenu.classList.toggle('off');
+        }
+        playMenuOpenSnd();
     };
     if (e.key === 'Escape'){
         // game paused
@@ -1033,9 +1052,7 @@ const upgradesBtn = document.querySelector('#upgradesBtn');
 upgradesBtn.addEventListener('click', openUpgrades);
 const upgradesMenu = document.querySelector('#upgradesMenu');
 function openUpgrades(){
-    menuOpenSnd.pause();
-    menuOpenSnd.currentTime = 0;
-    menuOpenSnd.play();
+    playMenuOpenSnd();
     upgradesMenu.classList.toggle('off');
 }
 //  UPGRADES ======================================
@@ -1093,6 +1110,26 @@ function upgradeEneCap(){
         playRepairSnd();
     }
 }
+// stats menu
+const statsBtn = document.querySelector('#statsBtn');
+const statsMenu = document.querySelector('#statsMenu');
+statsBtn.addEventListener('click', openStats);
+function openStats() {
+    statsMenu.classList.toggle('off');
+    playMenuOpenSnd();
+
+}
+// options menu
+const optionsBtn = document.querySelector('#optionsBtn');
+const optionsMenu = document.querySelector('#optionsMenu');
+optionsBtn.addEventListener('click', openOptionsMenu);
+function openOptionsMenu(){
+    optionsMenu.classList.toggle('options-off');
+    playMenuOpenSnd();
+}
+
+
+
 function addGold(quantity) {
     credits += quantity;
 }

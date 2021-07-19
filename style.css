@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: Audiowide;
 }
 body {
     width: 100vw;
@@ -33,10 +34,7 @@ canvas {
     align-items: center;
     z-index: 10;
 }
-.off {
-    opacity: 0;
-    transform: translate(-100%, -100%);
-}
+
 .btn1 {
     background: rgba(0,200,255,.1);
     /* border: none; */
@@ -61,21 +59,23 @@ canvas {
     border:rgba(0,200,255,.2);
     text-align: center;
 }
-.upgrades-menu {
+.upgrades-menu, .stats-menu {
     position: absolute;
-    background: linear-gradient(to right, rgba(0,0,0,.5),rgba(0,0,0,.1));
-    position: absolute;
-    bottom: 0;
-    left: 0;
     width: 20%;
     height: 100%;
     display: flex;
     justify-content: center;
     flex-direction: column;
-    color: white;
-    font-family: arial;
+    background: linear-gradient(to right, rgba(0,0,0,.5),rgba(0,0,0,.1));
+
+}
+.upgrades-menu {
+    /* background: linear-gradient(to right, rgba(0,0,0,.5),rgba(0,0,0,.1)); */
+    bottom: 0;
+    left: 0;
+  
     z-index: 9;
-    cursor: none;
+    /* cursor: none; */
 }
 .upgrade-bar {
     background: rgba(0,200,255,.1);
@@ -103,6 +103,52 @@ canvas {
     color: white;
     text-shadow: 5px 5px 20px cyan;
     font-family: audiowide;
+}
+.stats-menu {
+  
+    right: 0;
+    top: 0;
+    padding: 10px;
+    border-left: 2px solid cyan;
+    
+}
+.options-menu {
+    width: 30%;
+    height: 30%;
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(hsla(0,0%,0%, 0.5), hsla(0,0%,0%,0.1));
+    /* background: hsla(0,0%,0%,.2); */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 10;
+    transition: transform 0.5s ease, opacity 0.2s ease;
+}
+.off {
+    opacity: 0;
+    transform: translate(-200%, -200%);
+    /* z-index: 0; */
+}
+.options-off {
+    opacity: 0;
+    transform: translate(-50%, -300%);
+    
+}
+label {
+    color: cyan;
+}
+.volume-slider-box {
+    padding: 10px;
+    margin: 10px;
+    background:hsla(200, 100%, 50%, 0.2);
+    width: 100%;
+}
+p {
+    color: cyan;
 }
 .pause-off {
     z-index: 0;

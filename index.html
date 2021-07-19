@@ -15,7 +15,7 @@
         <button class="btn1" id="upgradesBtn">Upgrades</button>
         <button class="btn1" id="repairBtn">Repair</button>
         <button class="btn1" id="statsBtn">Stats</button>
-        <button class="btn1" id="options">Options</button>
+        <button class="btn1" id="optionsBtn">Options</button>
         <!-- <button class="btn1" id="galacticMap">Galactic Map</button> -->
         
     </div>
@@ -46,9 +46,35 @@
             <div class="upBtn">+</div>
         </div>
     </div>
+    <div class="stats-menu off" id="statsMenu">
+        <p id="baseHullStat">Base Hull Integrity: </p>
+        <p>Energy</p>
+        <p>Energy Recharge:</p>
+        <p>Projectile Damage:</p>
+        <p>Projectile Speed:</p>
+        <p>Reload Speed:</p>
+        <p>Credits: </p>
+        <p>Status: </p>
+    </div>
+    <div class="options-menu options-off" id="optionsMenu">
+        <!-- zrob querySelectorAll i forEach. w evencie zmieniaj wartosci dla wszystkich trzech zmiennych naraz. -->
+        <div class="volume-slider-box">
+            <label for="SFX">SFX Volume</label>
+            <input type="range" name="SFX" class="volume-input" id="SFXVolInput" min="0" max="1" step="0.01">
+        </div>
+        <div class="volume-slider-box">
+            <label for="Music">Music Volume</label>
+            <input type="range" name="Music" class="volume-input" id="musicVolInput" min="0" max="1" step="0.01">
+        </div>
+        <div class="volume-slider-box">
+            <label for="UI">UI Volume</label>
+            <input type="range" name="UI" class="volume-input" id="uiVolInput" min="0" max="1" step="0.01">
+        </div>
+    </div>
     <div class="pause-screen pause-off" id="pauseScreen">
         <h1>Game Paused</h1>
     </div>
+    
     <script src="main.js"></script>
 </body>
 </html>
