@@ -16,9 +16,9 @@ let musicVol = 0.1;
 let uiVol = 0.1;
 let gameOn = false;
 let gamePaused = false;
-// in future make player object and put all that shit inside
+// in future make player object and put all that inside
 let enemySpeedModifier = 20;
-let enemyHpModifier = 10;
+let enemyHpModifier = 15;
 let enemyDmgModifier = 0.5;
 let credits = 0;
 let level = 1;
@@ -47,7 +47,7 @@ enemyImg.src = 'assets/img/hydra.png';
 const enemy2Img = new Image();
 enemy2Img.src = 'assets/img/ogre.png';
 const bgImg = new Image();
-bgImg.src = 'assets/img/bg3.png';
+bgImg.src = 'assets/img/Starset.png';
 const hudImg = new Image();
 hudImg.src = 'assets/img/hud1.png';
 
@@ -80,6 +80,7 @@ const repairSnd = new Audio();
 repairSnd.src = 'assets/sound/ui/Click_Electronic_10.mp3';
 repairSnd.vol = uiVol;
 
+//BGM
 
 const bgm1 = new Audio();
 bgm1.src = 'assets/sound/Phantom from Space.mp3';
@@ -88,7 +89,8 @@ const bgm2 = new Audio();
 bgm2.src = 'assets/sound/Space Fighter Loop.mp3';
 bgm2.volume = musicVol;
 
-
+// todo 
+// some music engine
 
 
 // click to start game
@@ -459,17 +461,19 @@ function handleLaserParticles() {
 }
 
 // IMMA FIRIN MA LAZAAAAAH!!!!!!! ============================
-// i know i know... lasers don't makes sounds, especially in vacuum ofspace.
+// i know i know... lasers don't makes sounds, especially in vacuum of space.
 // say it to George L... :D
 
 function laserSound() {
 // bass laser xd
 laserSnd.pause();
+laserSnd.volume = SFXVol;
 laserSnd.playbackRate = 0.5;
 laserSnd.currentTime = 0;
 laserSnd.play();
 // violin laser xd
 laser2Snd.pause();
+laser2Snd.volume = SFXVol;
 laser2Snd.currentTime = 0.09;
 laser2Snd.playbackRate = 1;
 laser2Snd.play();
@@ -587,8 +591,11 @@ class Enemy {
         this.credits = Math.floor(Math.random() * 100 + 20);
         this.angle = 0;
         this.dmg = (Math.random() * 5 + 2) * enemyDmgModifier;
+        this.img = enemyImg;
     }
     update() {
+        //change img
+        if (this.size >= 30) this.img = enemy2Img;
 // enemy movement towards the cannon / base
         let p1x = this.x;
         let p1y = this.y;
@@ -647,7 +654,7 @@ class Enemy {
         ctx.translate(this.x, this.y);
         // * Math.PI / 180
         ctx.rotate(this.angle * Math.PI /180);
-        ctx.drawImage(enemyImg, -this.size, -this.size, this.size*2, this.size*2);
+        ctx.drawImage(this.img, -this.size, -this.size, this.size*2, this.size*2);
         ctx.restore();
     }
     drawExplosion(){
@@ -985,7 +992,7 @@ function loop() {
         shoot();
         cannon.draw();
         base.drawShield();
-        mouse.update();
+        // mouse.update();
         mouse.draw();
         drawStats();
         gameOver();
@@ -1014,21 +1021,21 @@ addEventListener('keydown', function(e){
         menu.classList.toggle('off');
         // checks if upgrade menu contains off class to toggle it off
         //  when pressed menu button
-        if(!upgradesMenu.classList.contains('off')){
+        if (!upgradesMenu.classList.contains('off')){
             upgradesMenu.classList.toggle('off');
         }
-        if(!statsMenu.classList.contains('off')){
+        if (!statsMenu.classList.contains('off')){
             statsMenu.classList.toggle('off');
+        }
+        if (!optionsMenu.classList.contains('options-off')){
+            optionsMenu.classList.toggle('options-off');
         }
         playMenuOpenSnd();
     };
-    if (e.key === 'Escape'){
-        // game paused
-    }
-    // console.log(e.key)
 });
 function playRepairSnd(){
     repairSnd.pause();
+    repairSnd.volume = uiVol;
     repairSnd.currentTime = 0;
     repairSnd.play();
 }
@@ -1056,33 +1063,36 @@ function openUpgrades(){
     upgradesMenu.classList.toggle('off');
 }
 //  UPGRADES ======================================
+// setting base upgrade cost first
+let firepowerUpCost = 500;
 document.querySelector('#firepowerUp').addEventListener('click', upgradeFirepower);
+
 function upgradeFirepower() {
-    let cost = cannon.power * 5;
+    
     const firepowerCost = document.querySelector('#firepowerCost');
-    if (credits >= cost) {
+    if (credits >= firepowerUpCost) {
         cannon.power += 20;
         cannon.projectileSize ++;
         cannon.calcTrailSize();
         cannon.calcEnergyConsumption();
-        firepowerCost.innerText = cost;
-        credits -= cost;
-        console.log(`Firepower Upgraded! Cost: ${cost}, power: ${cannon.power}`)
+        credits -= firepowerUpCost;
+        firepowerUpCost = Math.floor(firepowerUpCost *1.5);
+        firepowerCost.innerText = firepowerUpCost;
+        console.log(`Firepower Upgraded! Cost: ${firepowerUpCost}, power: ${cannon.power}`)
         playRepairSnd();
         
     }
 }
 let reloadUpgradeCost = 1000;
-document.querySelector('#reloadUp').addEventListener('click', upgradeReload)
+document.querySelector('#reloadUp').addEventListener('click', upgradeReload);
+
 function upgradeReload(){
-    // let cost = 1000;
+
     const reloadCost = document.querySelector('#reloadCost');
     if (credits >= reloadUpgradeCost && cannon.reload > 5) {
-        // zmien koszt co iteracje
-        // zapisz koszt w globalnej zmiennej i dodawaj po prostu, albo mnóż
         cannon.reload --;
         credits -= reloadUpgradeCost;
-        reloadUpgradeCost = Math.floor(reloadUpgradeCost * 1.2);
+        reloadUpgradeCost = Math.floor(reloadUpgradeCost * 2.5);
         reloadCost.innerText = reloadUpgradeCost;
         if (cannon.reload === 5) {
             reloadCost.innerText = 'Max reload speed'
@@ -1090,26 +1100,38 @@ function upgradeReload(){
         playRepairSnd();
     }
 }
+// hull upgrade
+
+let hullUpCost = 2000;
 document.querySelector('#hullUp').addEventListener('click', upgradeHull);
+
 function upgradeHull(){
-    let cost = 2000;
-    if (credits >= cost){
-        base.maxHp = 2000;
-        base.hp = 2000;
-        credits -= cost;
+    
+    const hullCost = document.querySelector('#hullCost');
+    if (credits >= hullUpCost){
+        base.maxHp += 1000;
+        base.hp += base.maxHp;
+        credits -= hullUpCost;
+        hullUpCost = Math.floor(hullUpCost * 2);
+        hullCost.innerText = hullUpCost;
         playRepairSnd();
     }
 }
+
+let eneCapUpCost = 2000;
 document.querySelector('#eneCapUp').addEventListener('click', upgradeEneCap);
 function upgradeEneCap(){
-    let cost = 2000;
-    if (credits >= cost) {
+    const energyCost = document.querySelector('#energyCost');
+    if (credits >= eneCapUpCost) {
         base.maxEnergy += 1000;
         base.energy = base.maxEnergy;
-        credits -= cost;
+        credits -= eneCapUpCost;
+        eneCapUpCost = Math.floor(eneCapUpCost * 1.5);
+        energyCost.innerText = eneCapUpCost;
         playRepairSnd();
     }
 }
+
 // stats menu
 const statsBtn = document.querySelector('#statsBtn');
 const statsMenu = document.querySelector('#statsMenu');
@@ -1128,7 +1150,26 @@ function openOptionsMenu(){
     playMenuOpenSnd();
 }
 
+const SFXVolInput = document.querySelector('#SFXVolInput');
+SFXVolInput.addEventListener('change', () => {
+    SFXVol = SFXVolInput.value;
+    playMenuOpenSnd();
+})
+const musicVolInput = document.querySelector('#musicVolInput');
+musicVolInput.addEventListener('change', () => {
+    bgm2.pause();
+    musicVol = musicVolInput.value;
+    bgm2.play();
+    // hmmm something wrong here
+    playMenuOpenSnd();
 
+})
+const uiVolInput = document.querySelector('#uiVolInput');
+uiVolInput.addEventListener('change', () => {
+    musicVol = uiVolInput.value;
+    playMenuOpenSnd();
+
+})
 
 function addGold(quantity) {
     credits += quantity;
